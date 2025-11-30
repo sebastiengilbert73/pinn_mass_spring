@@ -1,0 +1,2 @@
+phase,epochs,learning_rate,duration_alpha
+1,10000,0.01,1
