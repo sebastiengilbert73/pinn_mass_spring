@@ -104,10 +104,11 @@ def main(
             diff_eqn_residual_t_tsr.requires_grad = True
 
             u = neural_net(diff_eqn_residual_t_tsr).squeeze()  # (N_res,)
+            du_dt = first_derivative(neural_net, diff_eqn_residual_t_tsr).squeeze()  # (N_res,)
             d2u_dt2 = second_derivative(neural_net, diff_eqn_residual_t_tsr, 0)  # (N_res, 1)
             d2u_dt2 = d2u_dt2[:, 0]  # (N_res)
 
-            diff_eqn_residual = k * u + mass/(duration**2) * d2u_dt2  # (N_res)
+            diff_eqn_residual = k * u + gamma/duration * du_dt + mass/(duration**2) * d2u_dt2  # (N_res)
             diff_eqn_residual_loss = criterion(diff_eqn_residual, torch.zeros_like(diff_eqn_residual))
 
             loss = diff_eqn_residual_loss
@@ -139,7 +140,6 @@ def main(
         u = np.zeros((256,), dtype=float)  # (256,)
         analytical_u = np.zeros((256,), dtype=float)  # (256,)
         delta_T = 1.0/(256 - 1)
-        images = []
         for t_ndx in range(256):
             t = t_ndx * delta_T  # [0 ... 1.0]
             t_tsr = torch.tensor([[t]]).to(device)  # (1,)
@@ -154,8 +154,6 @@ def main(
         ax.legend()
         ax.set_xlabel('t')
         ax.set_ylabel('u')
-        #ax.set_title(f't = {(t * duration):.2f} s')
-        #ax.set_ylim(-1.1, 1.1)
         ax.grid(True)
 
         image_filepath = os.path.join(outputDirectory, f"prediction_{t_ndx}.png")
@@ -171,10 +169,10 @@ if __name__ == '__main__':
     parser.add_argument('--initialSpeed', help="The initial speed. Default: 1.0", type=float, default=1.0)
     parser.add_argument('--architecture', help="The neural network architecture. Default: 'HardConstrainedTimeResNet_2_32_1_0.3'", default='HardConstrainedTimeResNet_2_32_1_0.3')
     parser.add_argument('--startingNeuralNetwork', help="The filepath to the starting neural network. Default: 'None'", default='None')
-    parser.add_argument('--duration', help="The simulation duration, in seconds. Default: 10.0", type=float, default=10.0)
+    parser.add_argument('--duration', help="The simulation duration, in seconds. Default: 4.0", type=float, default=4.0)
     parser.add_argument('--k', help="The spring constant. in N/m. Default: 3.9478", type=float, default=3.9478)
     parser.add_argument('--mass', help="The mass. Default: 0.1", type=float, default=0.1)
-    parser.add_argument('--gamma', help="The friction coefficient, in kg/s. Default: 0.0", type=float, default=0.0)
+    parser.add_argument('--gamma', help="The friction coefficient, in kg/s. Default: 0.2", type=float, default=0.2)
     parser.add_argument('--scheduleFilepath', help="The filepath to the training schedule. Default: './schedule.csv'", default='./schedule.csv')
     parser.add_argument('--numberOfDiffEquResPoints', help="The number of points for the differential equation residual. Default: 32768", type=int, default=32768)
     parser.add_argument('--displayResults', help="Display the results", action='store_true')
