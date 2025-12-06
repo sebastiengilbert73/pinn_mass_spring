@@ -158,7 +158,7 @@ def main(
 
         image_filepath = os.path.join(outputDirectory, f"prediction_{t_ndx}.png")
         plt.savefig(image_filepath)
-        plt.show() 
+        plt.show()
 
 
 if __name__ == '__main__':
